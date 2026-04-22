@@ -25,6 +25,14 @@ async function main() {
   const escrowAddress = await escrow.getAddress();
   console.log(`  CarbideEscrow deployed to: ${escrowAddress}`);
 
+  // Deploy CarbideRegistry
+  console.log("Deploying CarbideRegistry...");
+  const CarbideRegistry = await ethers.getContractFactory("CarbideRegistry");
+  const registry = await CarbideRegistry.deploy();
+  await registry.waitForDeployment();
+  const registryAddress = await registry.getAddress();
+  console.log(`  CarbideRegistry deployed to: ${registryAddress}`);
+
   // Write deployment info to JSON
   const deploymentsDir = path.join(__dirname, "..", "deployments");
   if (!fs.existsSync(deploymentsDir)) {
@@ -39,6 +47,7 @@ async function main() {
     contracts: {
       MockUSDC: usdcAddress,
       CarbideEscrow: escrowAddress,
+      CarbideRegistry: registryAddress,
     },
   };
 
