@@ -1,2 +1,6 @@
+.anchor/
+target/
 node_modules/
 .env
+test-ledger/
+.DS_Store
