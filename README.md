@@ -73,8 +73,22 @@ anchor run add-verifier --provider.cluster devnet -- <verifier-pubkey>
 
 ## Toolchain notes
 
-`anchor build` invokes Solana's bundled SBF cargo. If you see
-"lock file version 4 requires `-Znext-lockfile-bump`", delete the
-generated `Cargo.lock` and let the SBF cargo regenerate it — the
-workspace deliberately gitignores `Cargo.lock` to avoid the
-host-vs-platform-tools cargo version mismatch.
+Solana CLI 2.0.21 bundles platform-tools v1.42 (cargo 1.75), which
+cannot read the lockfile v4 that host cargo (1.78+) writes. If you
+see "lock file version 4 requires `-Znext-lockfile-bump`" during
+`anchor build`, build each program with a newer platform-tools:
+
+```sh
+rm -f Cargo.lock
+( cd programs/carbide_registry && cargo build-sbf --tools-version v1.52 )
+( cd programs/carbide_escrow   && cargo build-sbf --tools-version v1.52 )
+anchor idl build -p carbide_registry -o target/idl/carbide_registry.json -t target/types/carbide_registry.ts
+anchor idl build -p carbide_escrow   -o target/idl/carbide_escrow.json   -t target/types/carbide_escrow.ts
+```
+
+`anchor build` itself doesn't expose `--tools-version` cleanly (the
+flag bleeds into the IDL `cargo test` step and errors out), so the
+SBF build and IDL build are run separately. Upgrading to Solana CLI
+2.1+ bundles platform-tools v1.46+ and lets `anchor build` work
+unmodified. `Cargo.lock` is gitignored so the host vs. platform-tools
+cargo version mismatch never gets baked into the tree.
