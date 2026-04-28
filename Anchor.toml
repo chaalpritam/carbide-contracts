@@ -23,6 +23,8 @@ wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 'tests/**/*.ts'"
+add-verifier = "node_modules/.bin/ts-node --transpile-only scripts/add_verifier.ts"
+exercise-escrow = "node_modules/.bin/ts-node --transpile-only scripts/exercise_escrow.ts"
 
 [test.validator]
 url = "https://api.devnet.solana.com"
