@@ -71,6 +71,47 @@ anchor run add-verifier --provider.cluster devnet -- <verifier-pubkey>
 
 (See `migrations/deploy.ts` to extend with custom post-deploy steps.)
 
+## Mainnet-beta deploy
+
+Mainnet uses the same flow; the only differences are funding, the
+`--provider.cluster` flag, and the USDC mint that gets passed into the
+escrow program. Treat it as a one-way operation — re-deploys consume
+real SOL and are irreversible without an upgrade authority.
+
+```sh
+solana config set --url mainnet-beta
+solana balance                                # confirm the deploy
+                                              # keypair has enough SOL
+                                              # (~3 SOL is plenty)
+
+anchor build                                  # produces fresh IDLs +
+                                              # BPF artefacts
+
+anchor deploy --provider.cluster mainnet      # publishes both programs
+anchor migrate --provider.cluster mainnet     # runs migrations/deploy.ts
+                                              # (initialises EscrowConfig)
+
+anchor run add-verifier --provider.cluster mainnet -- <verifier-pubkey>
+```
+
+Operational checklist before firing `anchor deploy`:
+
+1. **Pin the program IDs.** Run `anchor keys sync` so the addresses in
+   `Anchor.toml` and the `declare_id!` macros match the keys in
+   `target/deploy/`. Keep those keypairs in cold storage — they are the
+   upgrade authority.
+2. **Use mainnet USDC.** `EscrowConfig` stores the SPL mint that the
+   escrow accepts; pass `EsK7… (USDC mainnet)` rather than the devnet
+   mock when running `anchor migrate`.
+3. **Audit your verifier set.** `add-verifier` is admin-gated; only add
+   keys controlled by the verifier you intend to run.
+4. **Snapshot the IDLs.** Commit `target/idl/*.json` to a release tag —
+   the discovery service and clients consume them.
+5. **Update downstream config.** Set `wallet.registry_address`,
+   `escrow_address`, and `usdc_address` in `provider.toml` (and the
+   equivalent env vars in the discovery service) to the new mainnet
+   addresses, then redeploy those services.
+
 ## Toolchain notes
 
 Solana CLI 2.0.21 bundles platform-tools v1.42 (cargo 1.75), which
